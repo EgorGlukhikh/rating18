@@ -12,6 +12,9 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Required behind reverse proxies (Caddy/Nginx) for correct protocol/host handling.
+app.set('trust proxy', 1);
+
 app.use(helmet({ contentSecurityPolicy: false }));
 
 const corsOrigin = process.env.CORS_ORIGIN || true;

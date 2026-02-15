@@ -35,7 +35,11 @@ function extractAuthToken(req) {
 }
 
 function getHostOrigin(req) {
-  return `${req.protocol}://${req.get('host')}`;
+  const forwardedProto = String(req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  const forwardedHost = String(req.get('x-forwarded-host') || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol;
+  const host = forwardedHost || req.get('host');
+  return `${protocol}://${host}`;
 }
 
 function resolveReturnUrl(req, value) {
@@ -109,7 +113,8 @@ router.get('/telegram/start', (req, res) => {
   }
 
   const returnTo = req.query.returnTo ? String(req.query.returnTo) : '';
-  const callbackUrl = new URL('/api/auth/telegram/callback', getHostOrigin(req));
+  const callbackBase = process.env.FRONTEND_URL || getHostOrigin(req);
+  const callbackUrl = new URL('/api/auth/telegram/callback', callbackBase);
   if (returnTo) callbackUrl.searchParams.set('returnTo', returnTo);
 
   const html = `<!doctype html>
