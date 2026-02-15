@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель (демо)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f6efe4;
+            color: #2c2845;
+        }
+        .panel-card {
+            background: #fff;
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(44, 40, 69, 0.08);
+        }
+        .badge-demo {
+            background: #ff6b4a;
+            color: #fff;
+            font-weight: 600;
+        }
+        .candidate-item {
+            border: 1px solid #efe7dd;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 0;
+            background: #fff;
+        }
+        .comment-item {
+            border: 1px solid #efe7dd;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+        .candidate-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+            gap: 12px;
+        }
+        .candidate-item .form-label {
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+        }
+        .candidate-item .form-control,
+        .candidate-item .form-select {
+            font-size: 0.95rem;
+            padding-top: 0.38rem;
+            padding-bottom: 0.38rem;
+        }
+        .candidate-extra {
+            border-top: 1px dashed #e6ddd1;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .admin-photo-preview {
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid #e6ddd1;
+            background: #f8f5ef;
+        }
+        .request-item {
+            border: 1px solid #efe7dd;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fff;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Админ-панель</h1>
+            <span class="badge badge-demo">Демо режим без авторизации</span>
+        </div>
+        <a href="index.html" class="btn btn-outline-dark">
+            <i class="bi bi-arrow-left"></i> На главную
+        </a>
+    </div>
+
+    <div class="card panel-card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Кандидаты: редактирование</h2>
+                <button class="btn btn-sm btn-primary" id="addCandidateBtn">
+                    <i class="bi bi-plus-circle"></i> Добавить кандидата
+                </button>
+            </div>
+            <div id="candidatesContainer"></div>
+        </div>
+    </div>
+
+    <div class="card panel-card mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Категории: предложения на модерации</h2>
+            <div id="categoryRequestsContainer"></div>
+        </div>
+    </div>
+
+    <div class="card panel-card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Комментарии: модерация</h2>
+            <div id="commentsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CANDIDATES_STORAGE_KEY = 'rating_candidates_v1';
+    const COMMENTS_STORAGE_KEY = 'rating_comments_v1';
+    const CATEGORIES_STORAGE_KEY = 'rating_categories_v1';
+    const CATEGORY_SUGGESTIONS_KEY = 'rating_category_suggestions_v1';
+    const MAX_ADMIN_PHOTO_BYTES = 10 * 1024 * 1024;
+    const DEFAULT_CATEGORIES = ['Образование', 'Культура', 'Спорт', 'Бизнес', 'Благотворительность', 'Экология'];
+
+    function loadJson(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return fallback;
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function saveJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function normalizeCategoryName(name) {
+        return String(name || '').trim();
+    }
+
+    function loadCategories() {
+        const list = loadJson(CATEGORIES_STORAGE_KEY, DEFAULT_CATEGORIES);
+        const normalized = list.map(normalizeCategoryName).filter(Boolean);
+        if (!normalized.length) return [...DEFAULT_CATEGORIES];
+        return normalized;
+    }
+
+    function saveCategories(categories) {
+        saveJson(CATEGORIES_STORAGE_KEY, categories);
+    }
+
+    function getCategoryList(candidates) {
+        const fromCandidates = candidates.map(c => normalizeCategoryName(c.category)).filter(Boolean);
+        const base = loadCategories();
+        return Array.from(new Set([...base, ...fromCandidates]));
+    }
+
+    function statusLabel(status) {
+        if (status === 'approved') return 'Одобрен';
+        if (status === 'pending') return 'На модерации';
+        if (status === 'rejected') return 'Отклонен';
+        return status;
+    }
+
+    function renderCandidates() {
+        const container = document.getElementById('candidatesContainer');
+        const candidates = loadJson(CANDIDATES_STORAGE_KEY, []);
+        const categories = getCategoryList(candidates);
+
+        if (!candidates.length) {
+            container.innerHTML = '<div class="text-muted">Кандидатов пока нет.</div>';
+            return;
+        }
+
+        container.innerHTML = `<div class="candidate-grid">` + candidates.map(c => `
+            <div class="candidate-item" data-id="${c.id}">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small">ФИО</label>
+                        <input class="form-control form-control-sm" name="full_name" value="${escapeHtml(c.full_name || '')}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Категория</label>
+                        <input class="form-control form-control-sm" name="category" value="${escapeHtml(c.category || '')}" list="categoryList">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Статус</label>
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="approved" ${c.status === 'approved' ? 'selected' : ''}>Одобрен</option>
+                            <option value="pending" ${c.status === 'pending' ? 'selected' : ''}>На модерации</option>
+                            <option value="rejected" ${c.status === 'rejected' ? 'selected' : ''}>Отклонен</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Голоса</label>
+                        <input type="number" min="0" class="form-control form-control-sm" name="votes" value="${Number(c.votes || 0)}">
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-success" data-action="save">
+                        <i class="bi bi-check2-circle"></i> Сохранить
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-action="delete">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" data-action="toggle-extra">
+                        <i class="bi bi-chevron-down"></i> Детали
+                    </button>
+                </div>
+                <div class="candidate-extra" hidden>
+                    <div class="mb-2">
+                        <label class="form-label small">Фото</label>
+                        <input type="file" class="form-control form-control-sm" name="photo_file" accept="image/*">
+                        <div class="small text-muted mt-1">JPG/PNG/WebP, до 10 МБ.</div>
+                        <div class="mt-2">
+                            ${c.photo_url
+                                ? `<img src="${escapeHtml(c.photo_url)}" alt="Фото кандидата" class="admin-photo-preview">`
+                                : '<span class="small text-muted">Фото не загружено</span>'}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small">Описание</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2">${escapeHtml(c.description || '')}</textarea>
+                    </div>
+                </div>
+            </div>
+        `).join('') + `</div>
+            <datalist id="categoryList">
+                ${categories.map(cat => `<option value="${escapeHtml(cat)}"></option>`).join('')}
+            </datalist>
+        `;
+    }
+
+    function renderCategoryRequests() {
+        const container = document.getElementById('categoryRequestsContainer');
+        if (!container) return;
+
+        const requests = loadJson(CATEGORY_SUGGESTIONS_KEY, []);
+        const pending = requests
+            .filter(item => item.status === 'pending')
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        const categories = loadCategories();
+
+        const categoriesInfo = `
+            <div class="small text-muted mb-3">
+                Текущие категории (${categories.length}): ${categories.map(escapeHtml).join(', ')}
+            </div>
+        `;
+
+        if (!pending.length) {
+            container.innerHTML = categoriesInfo + '<div class="text-muted">Нет категорий, ожидающих модерацию.</div>';
+            return;
+        }
+
+        container.innerHTML = categoriesInfo + pending.map(req => `
+            <div class="request-item" data-category-request-id="${req.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(req.name)}</div>
+                        <div class="small text-muted">${new Date(req.createdAt).toLocaleString('ru-RU')}</div>
+                    </div>
+                    <span class="badge text-bg-warning">На модерации</span>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-outline-success" data-category-action="approve">Одобрить</button>
+                    <button class="btn btn-sm btn-outline-danger" data-category-action="reject">Отклонить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function candidateNameById(candidates, id) {
+        const candidate = candidates.find(c => c.id === id);
+        return candidate ? candidate.full_name : id;
+    }
+
+    function renderComments() {
+        const container = document.getElementById('commentsContainer');
+        const candidates = loadJson(CANDIDATES_STORAGE_KEY, []);
+        const comments = loadJson(COMMENTS_STORAGE_KEY, []);
+
+        if (!comments.length) {
+            container.innerHTML = '<div class="text-muted">Комментариев пока нет.</div>';
+            return;
+        }
+
+        const sorted = [...comments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        container.innerHTML = sorted.map(comment => `
+            <div class="comment-item" data-comment-id="${comment.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-semibold small">${escapeHtml(comment.author || 'Пользователь')}</div>
+                        <div class="text-muted small">${new Date(comment.createdAt).toLocaleString('ru-RU')}</div>
+                        <div class="small mt-1"><b>Кандидат:</b> ${escapeHtml(candidateNameById(candidates, comment.candidateId))}</div>
+                    </div>
+                    <span class="badge ${comment.status === 'approved' ? 'text-bg-success' : comment.status === 'pending' ? 'text-bg-warning' : 'text-bg-secondary'}">${statusLabel(comment.status)}</span>
+                </div>
+                <div class="mt-2">${escapeHtml(comment.text || '')}</div>
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-outline-success" data-comment-action="approve">Одобрить</button>
+                    <button class="btn btn-sm btn-outline-secondary" data-comment-action="reject">Скрыть</button>
+                    <button class="btn btn-sm btn-outline-danger" data-comment-action="delete">Удалить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Не удалось прочитать изображение.'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById('addCandidateBtn')?.addEventListener('click', function() {
+        const candidates = loadJson(CANDIDATES_STORAGE_KEY, []);
+        candidates.push({
+            id: `cand_${Date.now()}`,
+            full_name: 'Новый кандидат',
+            category: 'Категория',
+            description: 'Описание кандидата',
+            votes: 0,
+            status: 'pending',
+            photo_url: ''
+        });
+        saveJson(CANDIDATES_STORAGE_KEY, candidates);
+        renderCandidates();
+    });
+
+    document.getElementById('candidatesContainer')?.addEventListener('click', async function(event) {
+        const actionBtn = event.target.closest('[data-action]');
+        if (!actionBtn) return;
+
+        const candidateNode = event.target.closest('[data-id]');
+        if (!candidateNode) return;
+
+        const candidateId = candidateNode.dataset.id;
+        const action = actionBtn.dataset.action;
+        const candidates = loadJson(CANDIDATES_STORAGE_KEY, []);
+        const idx = candidates.findIndex(c => c.id === candidateId);
+        if (idx === -1) return;
+
+        if (action === 'toggle-extra') {
+            const extra = candidateNode.querySelector('.candidate-extra');
+            if (!extra) return;
+            const isHidden = extra.hasAttribute('hidden');
+            if (isHidden) {
+                extra.removeAttribute('hidden');
+            } else {
+                extra.setAttribute('hidden', '');
+            }
+            return;
+        }
+
+        if (action === 'delete') {
+            candidates.splice(idx, 1);
+            saveJson(CANDIDATES_STORAGE_KEY, candidates);
+            renderCandidates();
+            return;
+        }
+
+        const photoFileInput = candidateNode.querySelector('[name="photo_file"]');
+        const photoFile = photoFileInput?.files?.[0] || null;
+        let nextPhotoUrl = candidates[idx].photo_url || '';
+
+        if (photoFile) {
+            if (!photoFile.type.startsWith('image/')) {
+                alert('Можно загружать только изображения.');
+                return;
+            }
+            if (photoFile.size > MAX_ADMIN_PHOTO_BYTES) {
+                alert('Файл слишком большой. Максимум 10 МБ.');
+                return;
+            }
+            try {
+                nextPhotoUrl = await readFileAsDataUrl(photoFile);
+            } catch (error) {
+                alert('Не удалось загрузить фото. Попробуйте другой файл.');
+                return;
+            }
+        }
+
+        candidates[idx] = {
+            ...candidates[idx],
+            full_name: candidateNode.querySelector('[name="full_name"]').value.trim(),
+            category: candidateNode.querySelector('[name="category"]').value.trim(),
+            status: candidateNode.querySelector('[name="status"]').value,
+            votes: Number(candidateNode.querySelector('[name="votes"]').value || 0),
+            photo_url: nextPhotoUrl,
+            description: candidateNode.querySelector('[name="description"]').value.trim()
+        };
+
+        const updatedCategory = normalizeCategoryName(candidates[idx].category);
+        if (updatedCategory) {
+            const categories = loadCategories();
+            if (!categories.some(cat => cat.toLowerCase() === updatedCategory.toLowerCase())) {
+                categories.push(updatedCategory);
+                saveCategories(categories);
+            }
+        }
+
+        saveJson(CANDIDATES_STORAGE_KEY, candidates);
+        renderCandidates();
+        renderCategoryRequests();
+        alert('Изменения сохранены.');
+    });
+
+    document.getElementById('commentsContainer')?.addEventListener('click', function(event) {
+        const btn = event.target.closest('[data-comment-action]');
+        if (!btn) return;
+
+        const node = event.target.closest('[data-comment-id]');
+        if (!node) return;
+
+        const commentId = node.dataset.commentId;
+        const action = btn.dataset.commentAction;
+        const comments = loadJson(COMMENTS_STORAGE_KEY, []);
+        const idx = comments.findIndex(c => c.id === commentId);
+        if (idx === -1) return;
+
+        if (action === 'approve') comments[idx].status = 'approved';
+        if (action === 'reject') comments[idx].status = 'rejected';
+        if (action === 'delete') comments.splice(idx, 1);
+
+        saveJson(COMMENTS_STORAGE_KEY, comments);
+        renderComments();
+    });
+
+    document.getElementById('categoryRequestsContainer')?.addEventListener('click', function(event) {
+        const btn = event.target.closest('[data-category-action]');
+        if (!btn) return;
+
+        const row = event.target.closest('[data-category-request-id]');
+        if (!row) return;
+
+        const requestId = row.dataset.categoryRequestId;
+        const action = btn.dataset.categoryAction;
+
+        const requests = loadJson(CATEGORY_SUGGESTIONS_KEY, []);
+        const idx = requests.findIndex(item => item.id === requestId);
+        if (idx === -1) return;
+
+        if (action === 'approve') {
+            const categories = loadCategories();
+            const categoryName = normalizeCategoryName(requests[idx].name);
+            if (categoryName && !categories.some(cat => cat.toLowerCase() === categoryName.toLowerCase())) {
+                categories.push(categoryName);
+                saveCategories(categories);
+            }
+            requests[idx].status = 'approved';
+            requests[idx].moderatedAt = new Date().toISOString();
+        } else if (action === 'reject') {
+            requests[idx].status = 'rejected';
+            requests[idx].moderatedAt = new Date().toISOString();
+        }
+
+        saveJson(CATEGORY_SUGGESTIONS_KEY, requests);
+        renderCategoryRequests();
+        renderCandidates();
+    });
+
+    renderCandidates();
+    renderCategoryRequests();
+    renderComments();
+</script>
+</body>
+</html>

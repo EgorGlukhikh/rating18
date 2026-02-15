@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Народный Рейтинг Удмуртии</title>
+
+    <!-- Favicon - Удмуртский солярный знак -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cpolygon fill='%23FF6B4A' points='250,0 295,162 420,82 340,207 500,250 340,293 420,418 295,338 250,500 205,338 80,418 160,293 0,250 160,207 80,82 205,162'/%3E%3C/svg%3E">
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            /* Bao-inspired пастельная палитра */
+            --primary-beige: #F5EDE1;
+            --secondary-beige: #EFE7DD;
+            --white: #FFFFFF;
+
+            /* Адаптированные цвета Удмуртии */
+            --udmurt-coral: #FF8B7A;
+            --udmurt-sage: #7CB89D;
+
+            /* Акцентные цвета */
+            --accent-orange: #FF6B4A;
+            --accent-mint: #6DD4C3;
+
+            /* Текстовые цвета */
+            --text-dark: #2C2845;
+            --text-body: #4A4458;
+            --text-muted: #9B95A8;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary-beige);
+            min-height: 100vh;
+            color: var(--text-body);
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(44, 40, 69, 0.06);
+        }
+
+        .navbar-brand {
+            color: var(--text-dark) !important;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-body) !important;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-orange) !important;
+        }
+
+        .solar-logo {
+            color: var(--udmurt-coral);
+            margin-right: 12px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .navbar-brand:hover .solar-logo {
+            transform: rotate(45deg);
+            color: var(--accent-orange);
+        }
+
+        .hero {
+            background: var(--primary-beige);
+            position: relative;
+            color: var(--text-dark);
+            padding: 100px 0;
+            margin-bottom: 60px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .hero .lead {
+            color: var(--text-body);
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero .btn {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 14px 36px;
+            border-radius: 30px;
+            box-shadow: 0 8px 24px rgba(255, 107, 74, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .hero .btn:hover {
+            background: #FF5A34;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(255, 107, 74, 0.4);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            background: var(--white);
+            box-shadow: 0 5px 25px rgba(44, 40, 69, 0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 40px rgba(44, 40, 69, 0.12);
+        }
+
+        .candidate-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--secondary-beige);
+            color: var(--text-body);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.5rem;
+            border: 2px solid var(--secondary-beige);
+        }
+
+        .vote-count {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .category-badge {
+            background: var(--secondary-beige);
+            color: var(--text-body);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            width: 50px;
+            height: 50px;
+            background: #FFD98E;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            box-shadow: 0 4px 12px rgba(255, 217, 142, 0.4);
+        }
+
+        .rating-row-card .card-body {
+            padding: 20px 24px;
+        }
+
+        .rank-place-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #ffd98e;
+            color: var(--text-dark);
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(255, 217, 142, 0.35);
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 991px) {
+            .rating-row-card .d-flex.align-items-start {
+                flex-direction: column;
+            }
+        }
+
+        .btn-vote {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-vote:hover {
+            background: #FF5A34;
+            transform: scale(1.05);
+            color: white;
+        }
+
+        .btn-login {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: #FF5A34;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 74, 0.3);
+            color: white;
+        }
+
+        .btn-telegram {
+            background: #0088cc;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-telegram:hover {
+            background: #006699;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 136, 204, 0.3);
+        }
+
+        .btn-max {
+            background: var(--udmurt-coral);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .btn-max:hover {
+            background: #FF7A67;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 139, 122, 0.3);
+        }
+
+        .btn-email {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-email:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .auth-divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #dee2e6;
+        }
+
+        .auth-divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .auth-method {
+            margin-bottom: 15px;
+        }
+
+        .email-form {
+            display: none;
+        }
+
+        .email-form.active {
+            display: block;
+        }
+
+        .stats-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(44, 40, 69, 0.06);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stats-card i {
+            font-size: 2.5rem;
+            color: var(--accent-orange);
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+
+        .filter-btn {
+            background: var(--secondary-beige);
+            color: var(--text-body);
+            border: none;
+            border-radius: 30px;
+            padding: 8px 20px;
+            margin: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--accent-orange);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 74, 0.25);
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+
+        .social-link:hover {
+            transform: translateY(-2px);
+            opacity: 0.85;
+        }
+
+        .social-icon-img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .comments-modal-list {
+            max-height: 52vh;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .comment-modal-item {
+            border: 1px solid var(--secondary-beige);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .modal-header {
+            background: var(--white);
+            color: var(--text-dark);
+            border-bottom: 1px solid var(--secondary-beige);
+        }
+
+        .modal-body {
+            background: var(--white);
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+
+        #nominateModal .btn-close {
+            filter: none;
+            opacity: 1;
+        }
+
+        .form-control {
+            border-radius: 16px;
+            border: 1px solid var(--secondary-beige);
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.1);
+        }
+
+        .auth-divider::before {
+            background: var(--secondary-beige);
+        }
+
+        /* Декоративные волнистые линии */
+        .decorative-wave {
+            position: fixed;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .decorative-wave.top-right {
+            top: 80px;
+            right: -50px;
+            width: 600px;
+            height: 300px;
+            transform: rotate(15deg);
+        }
+
+        .decorative-wave.bottom-left {
+            bottom: 100px;
+            left: -50px;
+            width: 500px;
+            height: 250px;
+            transform: rotate(-20deg);
+        }
+
+        /* Анимация плавания */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .decorative-wave.top-right {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .decorative-wave.bottom-left {
+            animation: float 8s ease-in-out infinite;
+        }
+
+        /* Контент поверх декоративных элементов */
+        .navbar, .hero, .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Декоративные волнистые линии -->
+    <svg class="decorative-wave top-right" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,100 Q125,50 250,100 T500,100" stroke="#6DD4C3" stroke-width="3" fill="none" opacity="0.4"/>
+        <path d="M0,120 Q125,70 250,120 T500,120" stroke="#FF8B7A" stroke-width="2" fill="none" opacity="0.3"/>
+    </svg>
+
+    <svg class="decorative-wave bottom-left" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,100 Q125,150 250,100 T500,100" stroke="#FF6B4A" stroke-width="3" fill="none" opacity="0.4"/>
+        <path d="M0,80 Q125,130 250,80 T500,80" stroke="#7CB89D" stroke-width="2" fill="none" opacity="0.3"/>
+    </svg>
+
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <svg class="solar-logo" width="32" height="32" viewBox="0 0 500 500" fill="currentColor">
+                    <polygon points="250,0 295,162 420,82 340,207 500,250 340,293 420,418 295,338 250,500 205,338 80,418 160,293 0,250 160,207 80,82 205,162"/>
+                </svg>
+                Народный Рейтинг Удмуртии
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#rating">Рейтинг</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#nominate">Номинировать</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">О проекте</a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <button class="btn btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="bi bi-box-arrow-in-right"></i> Войти
+                        </button>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-outline-dark" href="admin.html">
+                            <i class="bi bi-speedometer2"></i> Админ-панель
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Герой -->
+    <div class="hero">
+        <div class="container">
+            <h1 class="display-3 fw-bold mb-3">Народный Рейтинг Удмуртии</h1>
+            <p class="lead">Независимая платформа признания людей, которые делают Удмуртию лучше</p>
+            <button class="btn btn-light btn-lg mt-3" data-bs-toggle="modal" data-bs-target="#nominateModal">
+                <i class="bi bi-person-plus"></i> Предложить кандидата
+            </button>
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="container mb-5">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="bi bi-people"></i>
+                    <div class="stats-number" id="participantsCount">247</div>
+                    <div class="text-muted">Участники рейтинга</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                    <div class="stats-number" id="totalVotesCount">8,542</div>
+                    <div class="text-muted">Голосов отдано</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="bi bi-calendar-check"></i>
+                    <div class="stats-number" id="activeVotersCount">156</div>
+                    <div class="text-muted">Пользователей проголосовало</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <i class="bi bi-award"></i>
+                    <div class="stats-number" id="categoriesCount">6</div>
+                    <div class="text-muted">Категорий</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="container mb-4" id="rating">
+        <div class="text-center">
+            <h3 class="mb-3">Категории</h3>
+            <div id="filtersContainer"></div>
+            <div class="mt-3">
+                <button class="btn btn-sm btn-outline-dark" id="adminModeToggle"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Рейтинг -->
+    <div class="container mb-5">
+        <div class="row" id="candidatesGrid"></div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-secondary btn-lg" id="loadMoreCandidates">
+                <i class="bi bi-arrow-down-circle"></i> Показать еще
+            </button>
+        </div>
+    </div>
+
+    <!-- О проекте -->
+    <div class="container mb-5" id="about">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4">О проекте</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4><i class="bi bi-bullseye text-danger"></i> Цель</h4>
+                        <p>Создание независимой площадки для признания людей, которые вносят значимый вклад в развитие Удмуртской Республики.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h4><i class="bi bi-shield-check text-success"></i> Прозрачность</h4>
+                        <p>Все голоса учитываются честно. Один пользователь - один голос за кандидата. Авторизация через MAX гарантирует подлинность.</p>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <h4><i class="bi bi-people text-primary"></i> Народное голосование</h4>
+                        <p>Каждый житель республики может предложить достойного кандидата и поддержать героев своим голосом.</p>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <h4><i class="bi bi-gear text-warning"></i> Модерация</h4>
+                        <p>Все предложенные кандидаты проходят модерацию для обеспечения качества и достоверности информации.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Футер -->
+    <footer style="background: var(--secondary-beige); color: var(--text-dark);" class="py-5 mt-5">
+        <div class="container text-center">
+            <p class="mb-1 fw-semibold">&copy; 2026 Народный Рейтинг Удмуртии</p>
+            <p class="small" style="color: var(--text-body);">Независимая платформа народного признания</p>
+            <p class="small mb-0" style="color: var(--text-body);">Вдохновителем рейтинга является Юрий Паршиков и прекрасные жители Удмуртии, которые делают свой край лучше, ежедневно стараются его развивать и обогащать, не только финансово, ведь люди - самое большое богатство Удмуртии.</p>
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <a href="#" class="social-link" title="Telegram" aria-label="Telegram">
+                    <i class="bi bi-telegram" style="font-size: 1.55rem; color: var(--text-body);"></i>
+                </a>
+                <a href="#" class="social-link" title="VK" aria-label="VK">
+                    <img class="social-icon-img" src="https://vk.com/images/icons/favicons/fav_logo.ico?8" alt="VK">
+                </a>
+                <a href="#" class="social-link" title="MAX" aria-label="MAX">
+                    <img class="social-icon-img" src="https://max.ru/favicon.png" alt="MAX">
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модальное окно комментариев -->
+    <div class="modal fade" id="commentsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentsModalTitle">Комментарии</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="commentsModalBody" class="comments-modal-list"></div>
+                    <form id="commentsModalForm" class="mt-3">
+                        <label for="commentTextInput" class="form-label fw-semibold">Оставить комментарий</label>
+                        <textarea class="form-control" id="commentTextInput" placeholder="Ваш комментарий" maxlength="280" rows="3" required></textarea>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button class="btn btn-outline-primary" type="submit">Отправить</button>
+                        </div>
+                        <div class="small text-muted mt-2">Комментарии проходят модерацию перед публикацией.</div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно входа -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Вход в систему</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shield-check" style="font-size: 3.5rem; color: var(--udmurt-green);"></i>
+                        <h5 class="mt-3 mb-2">Выберите способ входа</h5>
+                        <p class="text-muted small">Безопасная авторизация для участия в голосовании</p>
+                    </div>
+
+                    <!-- Telegram авторизация -->
+                    <div class="auth-method">
+                        <button class="btn btn-telegram" onclick="loginWithTelegram()">
+                            <i class="bi bi-telegram"></i> Войти через Telegram
+                        </button>
+                    </div>
+
+                    <!-- MAX авторизация -->
+                    <div class="auth-method">
+                        <button class="btn btn-max" onclick="loginWithMAX()">
+                            <i class="bi bi-credit-card-2-front"></i> Войти через MAX
+                        </button>
+                    </div>
+
+                    <div class="auth-divider">
+                        <span>или</span>
+                    </div>
+
+                    <!-- Email форма -->
+                    <div id="emailAuthSection">
+                        <button class="btn btn-email" onclick="toggleEmailForm()">
+                            <i class="bi bi-envelope"></i> Войти по Email
+                        </button>
+
+                        <div class="email-form mt-3" id="emailForm">
+                            <form onsubmit="handleEmailAuth(event)">
+                                <div class="mb-3">
+                                    <label class="form-label text-start d-block small">Email</label>
+                                    <input type="email" class="form-control" placeholder="your@email.com" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-start d-block small">Пароль</label>
+                                    <input type="password" class="form-control" placeholder="••••••••" required>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                                        <label class="form-check-label small" for="rememberMe">
+                                            Запомнить меня
+                                        </label>
+                                    </div>
+                                    <a href="#" class="small text-decoration-none">Забыли пароль?</a>
+                                </div>
+                                <button type="submit" class="btn btn-email mb-2">
+                                    Войти
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="showRegisterForm()">
+                                    Регистрация
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <p class="small text-muted text-center mt-4 mb-0">
+                        Нажимая кнопку входа, вы соглашаетесь с <a href="#" class="text-decoration-none">правилами платформы</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно регистрации -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Регистрация</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form onsubmit="handleRegister(event)">
+                        <div class="mb-3">
+                            <label class="form-label">ФИО *</label>
+                            <input type="text" class="form-control" placeholder="Иванов Иван Петрович" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" placeholder="your@email.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Пароль *</label>
+                            <input type="password" class="form-control" placeholder="Минимум 8 символов" minlength="8" required>
+                            <div class="form-text small">Минимум 8 символов, используйте буквы и цифры</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Подтверждение пароля *</label>
+                            <input type="password" class="form-control" placeholder="Повторите пароль" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон (опционально)</label>
+                            <input type="tel" class="form-control" placeholder="+7 (___) ___-__-__">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                            <label class="form-check-label small" for="agreeTerms">
+                                Я согласен с <a href="#" class="text-decoration-none">правилами платформы</a> и <a href="#" class="text-decoration-none">политикой конфиденциальности</a>
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-login w-100 mb-2">
+                            <i class="bi bi-person-plus"></i> Зарегистрироваться
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="backToLogin()">
+                            Уже есть аккаунт? Войти
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно номинации -->
+    <div class="modal fade" id="nominateModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Предложить кандидата</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="nominateForm">
+                        <div class="mb-3">
+                            <label class="form-label">ФИО кандидата *</label>
+                            <input type="text" class="form-control" id="nominateFullName" placeholder="Иванов Иван Петрович" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Категория *</label>
+                            <select class="form-select" id="nominateCategorySelect" required>
+                                <option value="">Выберите категорию</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="nominateCustomCategoryWrap" hidden>
+                            <label class="form-label">Предложить категорию *</label>
+                            <input type="text" class="form-control" id="nominateCustomCategory" placeholder="Например: Наука и инновации">
+                            <div class="small text-muted mt-1">Новая категория появится после модерации админом.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание заслуг *</label>
+                            <textarea class="form-control" id="nominateDescription" rows="4" placeholder="Расскажите, чем этот человек помог Удмуртии..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Фото (опционально)</label>
+                            <input type="file" class="form-control" id="nominatePhoto" accept="image/*">
+                            <div class="form-text">
+                                Рекомендуется: JPG/PNG до 10 МБ, не более 3000x3000 px (оптимально 800x800-1600x1600).
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Контактные данные для проверки</label>
+                            <input type="text" class="form-control" id="nominateContact" placeholder="Email или телефон кандидата">
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Все предложения проходят модерацию перед публикацией
+                        </div>
+                        <button type="submit" class="btn btn-sber w-100">
+                            <i class="bi bi-send"></i> Отправить на модерацию
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const COMMENTS_STORAGE_KEY = 'rating_comments_v1';
+        const CANDIDATES_STORAGE_KEY = 'rating_candidates_v1';
+        const CATEGORIES_STORAGE_KEY = 'rating_categories_v1';
+        const CATEGORY_SUGGESTIONS_KEY = 'rating_category_suggestions_v1';
+        const LAST_COMMENT_TS_KEY = 'rating_last_comment_ts_v1';
+        const INITIAL_VISIBLE_CANDIDATES = 4;
+        const LOAD_MORE_STEP = 4;
+        const COMMENTS_PREVIEW_LIMIT = 2;
+        const DEFAULT_CATEGORIES = [
+            'Образование',
+            'Культура',
+            'Спорт',
+            'Бизнес',
+            'Благотворительность',
+            'Экология'
+        ];
+        const currentUser = {
+            id: localStorage.getItem('demoUserId') || `u_${Math.random().toString(16).slice(2, 10)}`,
+            name: localStorage.getItem('demoUserName') || 'Гость',
+            isAdmin: localStorage.getItem('demoIsAdmin') === '1'
+        };
+
+        localStorage.setItem('demoUserId', currentUser.id);
+
+        const adminModeToggle = document.getElementById('adminModeToggle');
+        function updateAdminToggleText() {
+            if (!adminModeToggle) return;
+            adminModeToggle.textContent = currentUser.isAdmin ? 'Админ: ВКЛ' : 'Админ: ВЫКЛ';
+        }
+
+        adminModeToggle?.addEventListener('click', function() {
+            const nextValue = !currentUser.isAdmin;
+            localStorage.setItem('demoIsAdmin', nextValue ? '1' : '0');
+            window.location.reload();
+        });
+
+        updateAdminToggleText();
+
+        const defaultCandidates = [
+            { id: 'cand_1', full_name: 'Иванов Иван Петрович', category: 'Образование', description: 'Директор школы №15, инициатор программы цифровизации образования в регионе.', votes: 1247, status: 'approved' },
+            { id: 'cand_2', full_name: 'Петрова Анна Сергеевна', category: 'Культура', description: 'Организатор фестиваля удмуртской культуры, хранитель народных традиций.', votes: 1089, status: 'approved' },
+            { id: 'cand_3', full_name: 'Сидоров Дмитрий Владимирович', category: 'Спорт', description: 'Тренер олимпийского резерва, воспитал 15 чемпионов России.', votes: 892, status: 'approved' },
+            { id: 'cand_4', full_name: 'Козлова Елена Михайловна', category: 'Благотворительность', description: 'Основатель фонда помощи детям, организовала более 50 благотворительных акций.', votes: 756, status: 'approved' },
+            { id: 'cand_5', full_name: 'Никитин Артем Валерьевич', category: 'Бизнес', description: 'Создал сеть ремесленных мастерских и открыл рабочие места в районах.', votes: 713, status: 'approved' },
+            { id: 'cand_6', full_name: 'Григорьева Лидия Павловна', category: 'Экология', description: 'Координатор волонтерских уборок и программ по раздельному сбору отходов.', votes: 684, status: 'approved' },
+            { id: 'cand_7', full_name: 'Смирнов Павел Игоревич', category: 'Культура', description: 'Продюсер местных музыкальных инициатив и бесплатных концертов для молодежи.', votes: 641, status: 'approved' },
+            { id: 'cand_8', full_name: 'Алексеева Мария Юрьевна', category: 'Образование', description: 'Разработала бесплатные курсы по профориентации для старшеклассников.', votes: 605, status: 'approved' },
+            { id: 'cand_9', full_name: 'Федоров Константин Олегович', category: 'Спорт', description: 'Организует дворовые турниры и бесплатные секции для детей.', votes: 557, status: 'pending' },
+            { id: 'cand_10', full_name: 'Лебедева Ирина Александровна', category: 'Благотворительность', description: 'Координирует адресную помощь пожилым и семьям в трудной ситуации.', votes: 529, status: 'approved' }
+        ];
+
+        function loadCandidates() {
+            try {
+                const raw = localStorage.getItem(CANDIDATES_STORAGE_KEY);
+                if (!raw) {
+                    localStorage.setItem(CANDIDATES_STORAGE_KEY, JSON.stringify(defaultCandidates));
+                    return [...defaultCandidates];
+                }
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) && parsed.length ? parsed : [...defaultCandidates];
+            } catch (e) {
+                return [...defaultCandidates];
+            }
+        }
+
+        function normalizeCategoryName(name) {
+            return String(name || '').trim();
+        }
+
+        function loadCategories() {
+            try {
+                const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+                if (!raw) {
+                    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(DEFAULT_CATEGORIES));
+                    return [...DEFAULT_CATEGORIES];
+                }
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || !parsed.length) return [...DEFAULT_CATEGORIES];
+                return parsed.map(normalizeCategoryName).filter(Boolean);
+            } catch (e) {
+                return [...DEFAULT_CATEGORIES];
+            }
+        }
+
+        function saveCategories() {
+            localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+        }
+
+        function loadCategorySuggestions() {
+            try {
+                const raw = localStorage.getItem(CATEGORY_SUGGESTIONS_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCategorySuggestions() {
+            localStorage.setItem(CATEGORY_SUGGESTIONS_KEY, JSON.stringify(categorySuggestions));
+        }
+
+        let candidates = loadCandidates();
+        let categories = loadCategories();
+        let categorySuggestions = loadCategorySuggestions();
+
+        let activeCategory = 'Все';
+        let visibleCandidates = INITIAL_VISIBLE_CANDIDATES;
+        let comments = loadComments();
+        let activeCommentCandidateId = null;
+        let showAllModalComments = false;
+        const commentsModalEl = document.getElementById('commentsModal');
+        const commentsModalInstance = commentsModalEl ? new bootstrap.Modal(commentsModalEl) : null;
+
+        function loadComments() {
+            try {
+                const raw = localStorage.getItem(COMMENTS_STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveComments() {
+            localStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
+        }
+
+        function ensureDemoComments() {
+            const demoAuthors = ['Егорка', 'Ольга', 'Андрей', 'Марина', 'Руслан', 'Светлана', 'Денис', 'Людмила'];
+            const demoTexts = [
+                'Очень достойный кандидат, поддерживаю!',
+                'Результат его работы видно в нашем районе.',
+                'Спасибо за реальную помощь людям.',
+                'Нужны такие люди в лидерах рейтинга.',
+                'Сильный вклад в развитие республики.',
+                'Хороший пример для молодежи.',
+                'Давно слежу за проектами, все на деле.',
+                'Полностью заслуживает высокое место.'
+            ];
+
+            let added = 0;
+            candidates.forEach((candidate, candidateIndex) => {
+                const existingCount = comments.filter(c => c.candidateId === candidate.id).length;
+                const needed = Math.max(0, 3 - existingCount);
+                for (let i = 0; i < needed; i++) {
+                    comments.push({
+                        id: `seed_${candidate.id}_${existingCount + i}`,
+                        candidateId: candidate.id,
+                        author: demoAuthors[(candidateIndex + i) % demoAuthors.length],
+                        text: demoTexts[(candidateIndex * 2 + i) % demoTexts.length],
+                        status: 'approved',
+                        createdAt: new Date(Date.now() - ((candidateIndex + 1) * (i + 2) * 3600 * 1000)).toISOString()
+                    });
+                    added++;
+                }
+            });
+
+            if (added > 0) {
+                saveComments();
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function getInitials(fullName) {
+            return fullName
+                .split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(word => word[0].toUpperCase())
+                .join('');
+        }
+
+        function inferGender(fullName) {
+            const parts = String(fullName || '').trim().split(/\s+/);
+            const firstName = (parts[1] || parts[0] || '').toLowerCase();
+            const patronymic = (parts[2] || '').toLowerCase();
+            const maleNameExceptions = ['илья', 'никита', 'кузьма', 'фома', 'лука', 'савва'];
+
+            if (patronymic.endsWith('вна') || patronymic.endsWith('чна')) return 'female';
+            if (patronymic.endsWith('ич')) return 'male';
+            if (maleNameExceptions.includes(firstName)) return 'male';
+            if (firstName.endsWith('а') || firstName.endsWith('я')) return 'female';
+            return 'male';
+        }
+
+        function makeGenderPlaceholder(gender) {
+            const isFemale = gender === 'female';
+            const bgColor = isFemale ? '#E36C9A' : '#4A8FE7';
+            const accentColor = isFemale ? '#F8D3E3' : '#CFE1FF';
+            const label = isFemale ? 'Ж' : 'М';
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect fill="${bgColor}" width="80" height="80"/><circle cx="40" cy="40" r="24" fill="${accentColor}" opacity="0.28"/><text x="50%" y="50%" font-size="30" fill="white" text-anchor="middle" dy=".35em" font-family="Arial, sans-serif">${label}</text></svg>`;
+            try {
+                if (typeof btoa === 'function') {
+                    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+                }
+            } catch (e) {
+                // fallback below
+            }
+            return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+        }
+
+        function getCandidatePhotoSrc(candidate) {
+            const customPhoto = String(candidate.photo_url || '').trim();
+            if (customPhoto) return customPhoto;
+            return makeGenderPlaceholder(inferGender(candidate.full_name));
+        }
+
+        function colorForCategory(category) {
+            const colors = {
+                'Образование': '#009639',
+                'Культура': '#E31E24',
+                'Спорт': '#009639',
+                'Бизнес': '#2C7A7B',
+                'Благотворительность': '#E31E24',
+                'Экология': '#2F855A'
+            };
+            return colors[category] || '#6c757d';
+        }
+
+        function rankStyle(rank) {
+            if (rank === 1) return '';
+            if (rank === 2) return ' style="background: linear-gradient(135deg, #C0C0C0, #808080);"';
+            if (rank === 3) return ' style="background: linear-gradient(135deg, #CD7F32, #8B4513);"';
+            return '';
+        }
+
+        function formatVotes(value) {
+            return new Intl.NumberFormat('ru-RU').format(value);
+        }
+
+        function statusLabel(status) {
+            if (status === 'approved') return 'Одобрен';
+            if (status === 'pending') return 'На модерации';
+            if (status === 'rejected') return 'Отклонен';
+            return status;
+        }
+
+        function renderCategoriesCount() {
+            const countNode = document.getElementById('categoriesCount');
+            if (countNode) {
+                countNode.textContent = String(categories.length);
+            }
+        }
+
+        function updateStats() {
+            const participantsNode = document.getElementById('participantsCount');
+            const totalVotesNode = document.getElementById('totalVotesCount');
+            const activeVotersNode = document.getElementById('activeVotersCount');
+
+            const participants = candidates.length;
+            const totalVotes = candidates.reduce((sum, candidate) => sum + Number(candidate.votes || 0), 0);
+            const activeVoters = Math.max(0, Math.ceil(totalVotes / 55));
+
+            if (participantsNode) participantsNode.textContent = formatVotes(participants);
+            if (totalVotesNode) totalVotesNode.textContent = formatVotes(totalVotes);
+            if (activeVotersNode) activeVotersNode.textContent = formatVotes(activeVoters);
+
+            renderCategoriesCount();
+        }
+
+        function renderFilters() {
+            const filtersContainer = document.getElementById('filtersContainer');
+            if (!filtersContainer) return;
+
+            const allButtons = ['Все', ...categories].map((categoryName, index) => {
+                const isActive = activeCategory === categoryName || (index === 0 && !categories.includes(activeCategory) && activeCategory === 'Все');
+                return `<button class="btn filter-btn ${isActive ? 'active' : ''}" data-category="${escapeHtml(categoryName)}">${escapeHtml(categoryName)}</button>`;
+            }).join('');
+
+            filtersContainer.innerHTML = allButtons;
+            renderCategoriesCount();
+        }
+
+        function renderNominationCategories() {
+            const select = document.getElementById('nominateCategorySelect');
+            if (!select) return;
+
+            const currentValue = select.value;
+            select.innerHTML = `
+                <option value="">Выберите категорию</option>
+                ${categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('')}
+                <option value="__suggest__">Предложить новую категорию</option>
+            `;
+
+            if ([...select.options].some(option => option.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = '';
+            }
+        }
+
+        function getVisibleCommentsForCandidate(candidateId) {
+            return comments.filter(comment => {
+                if (comment.candidateId !== candidateId) return false;
+                if (currentUser.isAdmin) return true;
+                return comment.status === 'approved';
+            });
+        }
+
+        function renderCommentsModal() {
+            const body = document.getElementById('commentsModalBody');
+            const title = document.getElementById('commentsModalTitle');
+            const form = document.getElementById('commentsModalForm');
+            if (!body || !title || !form || !activeCommentCandidateId) return;
+
+            const candidate = candidates.find(c => c.id === activeCommentCandidateId);
+            if (!candidate) return;
+
+            title.textContent = `Комментарии — ${candidate.full_name}`;
+
+            const candidateComments = getVisibleCommentsForCandidate(candidate.id)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const shownComments = showAllModalComments
+                ? candidateComments
+                : candidateComments.slice(0, COMMENTS_PREVIEW_LIMIT);
+
+            if (!candidateComments.length) {
+                body.innerHTML = '<div class="text-muted small">Пока нет комментариев.</div>';
+            } else {
+                body.innerHTML = shownComments.map(comment => {
+                    const statusBadge = currentUser.isAdmin
+                        ? `<span class="badge ${comment.status === 'approved' ? 'text-bg-success' : comment.status === 'pending' ? 'text-bg-warning' : 'text-bg-secondary'} ms-2">${statusLabel(comment.status)}</span>`
+                        : '';
+                    const moderationActions = currentUser.isAdmin
+                        ? `
+                            <div class="d-flex gap-2 mt-2">
+                                ${comment.status !== 'approved' ? `<button class="btn btn-sm btn-outline-success" data-comment-action="approve" data-comment-id="${comment.id}">Одобрить</button>` : ''}
+                                ${comment.status !== 'rejected' ? `<button class="btn btn-sm btn-outline-secondary" data-comment-action="reject" data-comment-id="${comment.id}">Скрыть</button>` : ''}
+                                <button class="btn btn-sm btn-outline-danger" data-comment-action="delete" data-comment-id="${comment.id}">Удалить</button>
+                            </div>
+                        `
+                        : '';
+
+                    return `
+                        <div class="comment-modal-item">
+                            <div class="small fw-semibold">${escapeHtml(comment.author)} ${statusBadge}</div>
+                            <div class="small mt-1">${escapeHtml(comment.text)}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">${new Date(comment.createdAt).toLocaleString('ru-RU')}</div>
+                            ${moderationActions}
+                        </div>
+                    `;
+                }).join('');
+
+                if (candidateComments.length > COMMENTS_PREVIEW_LIMIT) {
+                    body.innerHTML += `
+                        <div class="text-center mt-2">
+                            <button class="btn btn-sm btn-outline-secondary" data-comments-expand="1">
+                                ${showAllModalComments ? 'Свернуть' : `Показать все (${candidateComments.length})`}
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function openCommentsModal(candidateId) {
+            activeCommentCandidateId = candidateId;
+            showAllModalComments = false;
+            renderCommentsModal();
+            commentsModalInstance?.show();
+        }
+
+        function renderCandidates() {
+            const grid = document.getElementById('candidatesGrid');
+            const loadMoreBtn = document.getElementById('loadMoreCandidates');
+            updateStats();
+
+            if (activeCategory !== 'Все' && !categories.includes(activeCategory)) {
+                activeCategory = 'Все';
+            }
+
+            const filtered = candidates
+                .filter(c => activeCategory === 'Все' || c.category === activeCategory)
+                .sort((a, b) => b.votes - a.votes);
+
+            const visible = filtered.slice(0, visibleCandidates);
+
+            if (!visible.length) {
+                grid.innerHTML = `
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center text-muted">В этой категории пока нет кандидатов.</div>
+                        </div>
+                    </div>
+                `;
+                loadMoreBtn.style.display = 'none';
+                return;
+            }
+
+            grid.innerHTML = visible.map((candidate, index) => `
+                <div class="col-12">
+                    <div class="card rating-row-card">
+                        <div class="card-body">
+                            <span class="rank-place-badge"${rankStyle(index + 1)}>#${index + 1} место</span>
+                            <div class="d-flex align-items-start">
+                                <img src="${escapeHtml(getCandidatePhotoSrc(candidate))}"
+                                     onerror="this.onerror=null;this.src='${makeGenderPlaceholder('male')}';"
+                                     class="candidate-photo me-3" alt="${escapeHtml(candidate.full_name)}">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                        <div>
+                                            <h5 class="mb-1">${escapeHtml(candidate.full_name)}</h5>
+                                            <span class="category-badge mb-2 d-inline-block">${escapeHtml(candidate.category)}</span>
+                                            ${candidate.status !== 'approved' ? '<span class="badge text-bg-warning ms-2">на модерации</span>' : ''}
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-secondary" data-comments-open="${candidate.id}">
+                                                <i class="bi bi-chat-dots"></i> Комментарии (${getVisibleCommentsForCandidate(candidate.id).length})
+                                            </button>
+                                            <button class="btn btn-vote" data-candidate-id="${candidate.id}">
+                                                <i class="bi bi-hand-thumbs-up"></i> Голосовать
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-2">${escapeHtml(candidate.description)}</p>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="vote-count">${formatVotes(candidate.votes)}</span>
+                                        <small class="text-muted ms-2">голосов</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            loadMoreBtn.style.display = filtered.length > visible.length ? '' : 'none';
+        }
+
+        function isCommentSpam(text) {
+            if (/(https?:\/\/|www\.)/i.test(text)) return true;
+            if (/(.)\1{6,}/.test(text)) return true;
+            return false;
+        }
+
+        function canPostCommentNow() {
+            const lastTs = Number(localStorage.getItem(LAST_COMMENT_TS_KEY) || 0);
+            const now = Date.now();
+            if (now - lastTs < 30000) return false;
+            localStorage.setItem(LAST_COMMENT_TS_KEY, String(now));
+            return true;
+        }
+
+        document.getElementById('filtersContainer')?.addEventListener('click', function(event) {
+            const btn = event.target.closest('.filter-btn');
+            if (!btn) return;
+            activeCategory = btn.dataset.category || 'Все';
+            visibleCandidates = INITIAL_VISIBLE_CANDIDATES;
+            renderFilters();
+            renderCandidates();
+        });
+
+        document.getElementById('loadMoreCandidates')?.addEventListener('click', function() {
+            visibleCandidates += LOAD_MORE_STEP;
+            renderCandidates();
+        });
+
+        document.getElementById('candidatesGrid')?.addEventListener('click', function(event) {
+            const voteButton = event.target.closest('.btn-vote');
+            if (voteButton) {
+                alert('Для голосования необходимо войти в систему');
+                return;
+            }
+
+            const commentsButton = event.target.closest('[data-comments-open]');
+            if (commentsButton) {
+                openCommentsModal(commentsButton.dataset.commentsOpen);
+                return;
+            }
+        });
+
+        document.getElementById('commentsModalBody')?.addEventListener('click', function(event) {
+            const expandBtn = event.target.closest('[data-comments-expand]');
+            if (expandBtn) {
+                showAllModalComments = !showAllModalComments;
+                renderCommentsModal();
+                return;
+            }
+
+            const moderationButton = event.target.closest('[data-comment-action]');
+            if (!moderationButton) return;
+
+            if (!currentUser.isAdmin) {
+                alert('Только администратор может модерировать комментарии.');
+                return;
+            }
+
+            const action = moderationButton.dataset.commentAction;
+            const commentId = moderationButton.dataset.commentId;
+            const commentIndex = comments.findIndex(c => c.id === commentId);
+            if (commentIndex === -1) return;
+
+            if (action === 'approve') comments[commentIndex].status = 'approved';
+            if (action === 'reject') comments[commentIndex].status = 'rejected';
+            if (action === 'delete') comments.splice(commentIndex, 1);
+
+            saveComments();
+            renderCandidates();
+            renderCommentsModal();
+        });
+
+        document.getElementById('commentsModalForm')?.addEventListener('submit', function(event) {
+            event.preventDefault();
+            if (!activeCommentCandidateId) return;
+
+            const textInput = document.getElementById('commentTextInput');
+            const author = (currentUser.name || 'Пользователь').trim();
+            const text = (textInput?.value || '').trim();
+
+            if (text.length < 4) {
+                alert('Комментарий слишком короткий.');
+                return;
+            }
+
+            if (isCommentSpam(text)) {
+                alert('Комментарий отклонен как спам. Уберите ссылки и повторяющиеся символы.');
+                return;
+            }
+
+            if (!canPostCommentNow()) {
+                alert('Слишком часто. Попробуйте снова через 30 секунд.');
+                return;
+            }
+
+            comments.push({
+                id: `cm_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+                candidateId: activeCommentCandidateId,
+                author,
+                text,
+                status: currentUser.isAdmin ? 'approved' : 'pending',
+                createdAt: new Date().toISOString()
+            });
+
+            saveComments();
+            if (textInput) textInput.value = '';
+            alert(currentUser.isAdmin ? 'Комментарий опубликован.' : 'Комментарий отправлен на модерацию.');
+            renderCandidates();
+            renderCommentsModal();
+        });
+
+        ensureDemoComments();
+        renderFilters();
+        renderNominationCategories();
+        renderCandidates();
+
+        // === Функции авторизации ===
+
+        // Telegram авторизация
+        function loginWithTelegram() {
+            console.log('Telegram OAuth инициирован');
+            // В продакшене здесь будет интеграция с Telegram Login Widget
+            // https://core.telegram.org/widgets/login
+            alert('Перенаправление на авторизацию Telegram...\n\nВ продакшн версии здесь будет открыт Telegram Login Widget.');
+            // window.location.href = '/api/auth/telegram';
+        }
+
+        // MAX авторизация
+        function loginWithMAX() {
+            console.log('MAX OAuth инициирован');
+            // В продакшене здесь будет интеграция с MAX API
+            alert('Перенаправление на авторизацию MAX...\n\nВ продакшн версии здесь будет OAuth через MAX платежную систему.');
+            // window.location.href = '/api/auth/max';
+        }
+
+        // Показать/скрыть Email форму
+        function toggleEmailForm() {
+            const form = document.getElementById('emailForm');
+            form.classList.toggle('active');
+        }
+
+        // Обработка Email авторизации
+        function handleEmailAuth(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            console.log('Email login:', Object.fromEntries(formData));
+
+            // В продакшене здесь будет API запрос
+            alert('Вход выполнен успешно!\n\nВ продакшн версии здесь будет реальная авторизация через API.');
+            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+
+            // После успешной авторизации обновить UI
+            // updateUserInterface(userData);
+        }
+
+        // Показать форму регистрации
+        function showRegisterForm() {
+            bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+            registerModal.show();
+        }
+
+        // Вернуться к форме входа
+        function backToLogin() {
+            bootstrap.Modal.getInstance(document.getElementById('registerModal')).hide();
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        }
+
+        // Обработка регистрации
+        function handleRegister(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            console.log('Регистрация:', data);
+
+            // Валидация паролей
+            const password = e.target.querySelector('input[type="password"]').value;
+            const passwordConfirm = e.target.querySelectorAll('input[type="password"]')[1].value;
+
+            if (password !== passwordConfirm) {
+                alert('Пароли не совпадают!');
+                return;
+            }
+
+            // В продакшене здесь будет API запрос
+            alert('Регистрация успешна!\n\nНа ваш email отправлено письмо с подтверждением.\n\n(В продакшн версии)');
+            bootstrap.Modal.getInstance(document.getElementById('registerModal')).hide();
+
+            // Автоматический вход после регистрации
+            // autoLogin(data);
+        }
+
+        // Telegram Login Widget callback (для продакшена)
+        window.onTelegramAuth = function(user) {
+            console.log('Telegram user authenticated:', user);
+            // Отправка данных на backend для создания сессии
+            fetch('/api/auth/telegram/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Авторизация через Telegram успешна!');
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.error('Auth error:', err));
+        };
+
+        const nominateCategorySelect = document.getElementById('nominateCategorySelect');
+        const nominateCustomCategoryWrap = document.getElementById('nominateCustomCategoryWrap');
+        const nominateCustomCategoryInput = document.getElementById('nominateCustomCategory');
+        const nominatePhotoInput = document.getElementById('nominatePhoto');
+        const MAX_NOMINATION_PHOTO_BYTES = 10 * 1024 * 1024;
+
+        function toggleCustomCategoryField() {
+            const isSuggest = nominateCategorySelect?.value === '__suggest__';
+            if (nominateCustomCategoryWrap) {
+                nominateCustomCategoryWrap.hidden = !isSuggest;
+            }
+            if (nominateCustomCategoryInput) {
+                nominateCustomCategoryInput.required = !!isSuggest;
+                if (!isSuggest) nominateCustomCategoryInput.value = '';
+            }
+        }
+
+        nominateCategorySelect?.addEventListener('change', toggleCustomCategoryField);
+        nominateCategorySelect?.addEventListener('input', toggleCustomCategoryField);
+        toggleCustomCategoryField();
+
+        document.getElementById('nominateModal')?.addEventListener('shown.bs.modal', function() {
+            toggleCustomCategoryField();
+        });
+
+        // Обработка формы номинации
+        document.getElementById('nominateForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const fullName = (document.getElementById('nominateFullName')?.value || '').trim();
+            const selectedCategory = (nominateCategorySelect?.value || '').trim();
+            const suggestedCategory = normalizeCategoryName(nominateCustomCategoryInput?.value || '');
+            const description = (document.getElementById('nominateDescription')?.value || '').trim();
+            const contactInfo = (document.getElementById('nominateContact')?.value || '').trim();
+            const photoFile = nominatePhotoInput?.files?.[0] || null;
+
+            if (!fullName || !selectedCategory || !description) {
+                alert('Заполните обязательные поля формы.');
+                return;
+            }
+
+            if (photoFile && photoFile.size > MAX_NOMINATION_PHOTO_BYTES) {
+                alert('Фото слишком большое. Допустимый размер — до 10 МБ.');
+                return;
+            }
+
+            let finalCategory = selectedCategory === '__suggest__' ? suggestedCategory : selectedCategory;
+            if (!finalCategory) {
+                alert('Укажите новую категорию.');
+                return;
+            }
+
+            const sameExisting = categories.find(cat => cat.toLowerCase() === finalCategory.toLowerCase());
+            if (sameExisting) {
+                finalCategory = sameExisting;
+            }
+
+            const newCandidate = {
+                id: `cand_${Date.now()}`,
+                full_name: fullName,
+                category: finalCategory,
+                description,
+                votes: 0,
+                status: 'pending',
+                photo_url: '',
+                contact_info: contactInfo,
+                created_at: new Date().toISOString()
+            };
+
+            candidates.push(newCandidate);
+            localStorage.setItem(CANDIDATES_STORAGE_KEY, JSON.stringify(candidates));
+
+            if (selectedCategory === '__suggest__') {
+                const alreadyInCategories = categories.some(cat => cat.toLowerCase() === finalCategory.toLowerCase());
+                const existingSuggestion = categorySuggestions.find(item =>
+                    normalizeCategoryName(item.name).toLowerCase() === finalCategory.toLowerCase() &&
+                    item.status === 'pending'
+                );
+
+                if (!alreadyInCategories && !existingSuggestion) {
+                    categorySuggestions.push({
+                        id: `cat_req_${Date.now()}`,
+                        name: finalCategory,
+                        status: 'pending',
+                        createdAt: new Date().toISOString(),
+                        candidateId: newCandidate.id
+                    });
+                    saveCategorySuggestions();
+                }
+            }
+
+            alert('Спасибо! Кандидат отправлен на модерацию.');
+            bootstrap.Modal.getInstance(document.getElementById('nominateModal'))?.hide();
+            this.reset();
+            toggleCustomCategoryField();
+            renderCandidates();
+        });
+
+        // Плавная прокрутка
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

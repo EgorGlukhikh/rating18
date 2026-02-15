@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+build
+backend
+database
+rating
+*.md
+.vscode
+.idea

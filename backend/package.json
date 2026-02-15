@@ -1,0 +1,50 @@
+{
+  "name": "rating-backend",
+  "version": "1.0.0",
+  "description": "Backend для платформы Народный Рейтинг Удмуртии",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest --coverage",
+    "migrate": "node src/migrations/run.js",
+    "seed": "node src/seeds/run.js"
+  },
+  "keywords": ["rating", "voting", "udmurtia"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.35.2",
+    "passport": "^0.7.0",
+    "passport-oauth2": "^1.8.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "dotenv": "^16.3.1",
+    "joi": "^17.11.0",
+    "redis": "^4.6.12",
+    "winston": "^3.11.0",
+    "morgan": "^1.10.0",
+    "cookie-parser": "^1.4.6",
+    "compression": "^1.7.4",
+    "nodemailer": "^6.9.7",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.56.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
