@@ -1572,7 +1572,7 @@
             const loginModal = bootstrap.Modal.getInstance(loginModalEl);
             if (loginModal) loginModal.hide();
 
-            const returnTo = `${window.location.origin}${window.location.pathname}`;
+            const returnTo = `${window.location.origin}/`;
             window.location.href = `/api/auth/telegram/start?returnTo=${encodeURIComponent(returnTo)}`;
         }
 

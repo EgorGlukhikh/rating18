@@ -59,6 +59,7 @@ function resolveReturnUrl(req, value) {
     const requested = new URL(value, hostOrigin);
     const allowedOrigins = new Set([hostOrigin, fallback.origin]);
     if (!allowedOrigins.has(requested.origin)) return fallback;
+    if (requested.pathname.startsWith('/api/auth/telegram')) return fallback;
     return requested;
   } catch (_) {
     return fallback;
@@ -115,7 +116,8 @@ router.get('/telegram/start', (req, res) => {
   const returnTo = req.query.returnTo ? String(req.query.returnTo) : '';
   const callbackBase = process.env.FRONTEND_URL || getHostOrigin(req);
   const callbackUrl = new URL('/api/auth/telegram/callback', callbackBase);
-  if (returnTo) callbackUrl.searchParams.set('returnTo', returnTo);
+  const safeReturnUrl = resolveReturnUrl(req, returnTo);
+  callbackUrl.searchParams.set('returnTo', safeReturnUrl.toString());
 
   const html = `<!doctype html>
 <html lang="ru">
@@ -145,6 +147,9 @@ router.get('/telegram/start', (req, res) => {
 </html>`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   return res.send(html);
 });
 
