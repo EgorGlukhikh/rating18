@@ -84,17 +84,28 @@ function sanitizeUser(user) {
   };
 }
 
+function normalizeBotUsername(input) {
+  return String(input || '').trim().replace(/^@+/, '');
+}
+
+function isValidBotUsername(username) {
+  return /^[a-zA-Z0-9_]{5,}$/.test(username);
+}
+
 router.get('/telegram/config', (req, res) => {
   res.json({
     success: true,
-    botUsername: process.env.TELEGRAM_BOT_USERNAME || ''
+    botUsername: normalizeBotUsername(process.env.TELEGRAM_BOT_USERNAME || '')
   });
 });
 
 router.get('/telegram/start', (req, res) => {
-  const botUsername = String(process.env.TELEGRAM_BOT_USERNAME || '').trim();
+  const botUsername = normalizeBotUsername(process.env.TELEGRAM_BOT_USERNAME || '');
   if (!botUsername) {
     return res.status(500).send('TELEGRAM_BOT_USERNAME is not configured on server');
+  }
+  if (!isValidBotUsername(botUsername)) {
+    return res.status(500).send('TELEGRAM_BOT_USERNAME format is invalid');
   }
 
   const returnTo = req.query.returnTo ? String(req.query.returnTo) : '';
