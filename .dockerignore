@@ -1,10 +1,9 @@
-.git
+﻿.git
 .gitignore
 node_modules
 build
-backend
-database
+build_tmp
+build_ci
 rating
-*.md
 .vscode
 .idea

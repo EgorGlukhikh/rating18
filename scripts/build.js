@@ -2,7 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const rootDir = process.cwd();
-const buildDir = path.join(rootDir, 'build');
+const buildDirName = process.env.BUILD_DIR || 'build';
+const buildDir = path.join(rootDir, buildDirName);
 
 function exists(p) {
   return fs.existsSync(p);
@@ -18,7 +19,18 @@ function copyToBuild(relativePath) {
 }
 
 if (exists(buildDir)) {
-  fs.rmSync(buildDir, { recursive: true, force: true });
+  try {
+    fs.rmSync(buildDir, { recursive: true, force: true });
+  } catch (_) {
+    // Fallback for Windows file locks: clean directory contents instead of deleting root.
+    for (const entry of fs.readdirSync(buildDir)) {
+      try {
+        fs.rmSync(path.join(buildDir, entry), { recursive: true, force: true });
+      } catch (_) {
+        // Ignore locked files; they will be overwritten if possible.
+      }
+    }
+  }
 }
 fs.mkdirSync(buildDir, { recursive: true });
 
@@ -42,4 +54,4 @@ const dirsToCopy = [
 filesToCopy.forEach(copyToBuild);
 dirsToCopy.forEach(copyToBuild);
 
-console.log('Build completed. Files are in ./build');
+console.log(`Build completed. Files are in ./${buildDirName}`);

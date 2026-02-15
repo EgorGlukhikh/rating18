@@ -1,4 +1,7 @@
 node_modules/
 build/
+build_tmp/
+build_ci/
+backend/data/*.json
 .DS_Store
 Thumbs.db

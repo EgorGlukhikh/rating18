@@ -290,6 +290,17 @@
             box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
         }
 
+        #loginModal .btn-telegram,
+        #loginModal .btn-max,
+        #loginModal .btn-email {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            opacity: 1 !important;
+        }
+
         .auth-divider {
             text-align: center;
             margin: 25px 0;
@@ -485,6 +496,24 @@
             position: relative;
             z-index: 1;
         }
+
+        @media (max-width: 576px) {
+            #loginModal .modal-dialog {
+                margin: 0.5rem;
+            }
+
+            #loginModal .modal-body {
+                padding: 1rem !important;
+            }
+
+            #loginModal .btn-telegram,
+            #loginModal .btn-max,
+            #loginModal .btn-email {
+                padding: 14px 12px;
+                font-size: 16px;
+                line-height: 1.2;
+            }
+        }
     </style>
 </head>
 <body>
@@ -523,8 +552,13 @@
                         <a class="nav-link" href="#about">О проекте</a>
                     </li>
                     <li class="nav-item ms-3">
-                        <button class="btn btn-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <button class="btn btn-login" id="loginNavBtn" data-bs-toggle="modal" data-bs-target="#loginModal">
                             <i class="bi bi-box-arrow-in-right"></i> Войти
+                        </button>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <button class="btn btn-outline-dark" id="logoutNavBtn" style="display:none;">
+                            <i class="bi bi-box-arrow-right"></i> Выйти
                         </button>
                     </li>
                     <li class="nav-item ms-2">
@@ -616,7 +650,7 @@
                     </div>
                     <div class="col-md-6">
                         <h4><i class="bi bi-shield-check text-success"></i> Прозрачность</h4>
-                        <p>Все голоса учитываются честно. Один пользователь - один голос за кандидата. Авторизация через MAX гарантирует подлинность.</p>
+                        <p>Все голоса учитываются честно. Один пользователь - один голос за кандидата. Авторизация через Telegram и MAX гарантирует подлинность.</p>
                     </div>
                     <div class="col-md-6 mt-3">
                         <h4><i class="bi bi-people text-primary"></i> Народное голосование</h4>
@@ -858,6 +892,10 @@
         const CATEGORIES_STORAGE_KEY = 'rating_categories_v1';
         const CATEGORY_SUGGESTIONS_KEY = 'rating_category_suggestions_v1';
         const LAST_COMMENT_TS_KEY = 'rating_last_comment_ts_v1';
+        const AUTH_TOKEN_KEY = 'rating_auth_token_v1';
+        const AUTH_USER_ID_KEY = 'rating_auth_user_id_v1';
+        const AUTH_USER_NAME_KEY = 'rating_auth_user_name_v1';
+        const AUTH_USER_ADMIN_KEY = 'rating_auth_user_admin_v1';
         const INITIAL_VISIBLE_CANDIDATES = 4;
         const LOAD_MORE_STEP = 4;
         const COMMENTS_PREVIEW_LIMIT = 2;
@@ -869,27 +907,141 @@
             'Благотворительность',
             'Экология'
         ];
-        const currentUser = {
-            id: localStorage.getItem('demoUserId') || `u_${Math.random().toString(16).slice(2, 10)}`,
-            name: localStorage.getItem('demoUserName') || 'Гость',
-            isAdmin: localStorage.getItem('demoIsAdmin') === '1'
-        };
+        function consumeTelegramTokenFromUrl() {
+            const url = new URL(window.location.href);
+            const tgToken = url.searchParams.get('tg_token');
+            const tgError = url.searchParams.get('tg_error');
+            if (!tgToken && !tgError) return;
+
+            if (tgToken) {
+                localStorage.setItem(AUTH_TOKEN_KEY, tgToken);
+            }
+            if (tgError) {
+                alert(`Ошибка Telegram авторизации: ${tgError}`);
+            }
+
+            url.searchParams.delete('tg_token');
+            url.searchParams.delete('tg_error');
+            window.history.replaceState({}, document.title, url.toString());
+        }
+
+        function getAuthToken() {
+            return localStorage.getItem(AUTH_TOKEN_KEY) || '';
+        }
+
+        function clearAuthState() {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            localStorage.removeItem(AUTH_USER_ID_KEY);
+            localStorage.removeItem(AUTH_USER_NAME_KEY);
+            localStorage.removeItem(AUTH_USER_ADMIN_KEY);
+        }
+
+        function storeAuthUser(user) {
+            localStorage.setItem(AUTH_USER_ID_KEY, String(user.id || ''));
+            localStorage.setItem(AUTH_USER_NAME_KEY, String(user.full_name || user.username || 'Пользователь'));
+            localStorage.setItem(AUTH_USER_ADMIN_KEY, user.role === 'admin' ? '1' : '0');
+        }
+
+        async function syncAuthUser() {
+            const token = getAuthToken();
+            if (!token) return false;
+
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { Authorization: `Bearer ${token}` },
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success || !data.user) {
+                    clearAuthState();
+                    return false;
+                }
+                storeAuthUser(data.user);
+                return true;
+            } catch (error) {
+                clearAuthState();
+                return false;
+            }
+        }
+
+        consumeTelegramTokenFromUrl();
+        const authSyncPromise = syncAuthUser();
+
+        function readCurrentUserFromStorage() {
+            return {
+                id: localStorage.getItem(AUTH_USER_ID_KEY) || localStorage.getItem('demoUserId') || `u_${Math.random().toString(16).slice(2, 10)}`,
+                name: localStorage.getItem(AUTH_USER_NAME_KEY) || localStorage.getItem('demoUserName') || 'Гость',
+                isAdmin: localStorage.getItem(AUTH_USER_ADMIN_KEY) === '1' || localStorage.getItem('demoIsAdmin') === '1',
+                isAuthenticated: !!localStorage.getItem(AUTH_USER_ID_KEY)
+            };
+        }
+
+        let currentUser = readCurrentUserFromStorage();
 
         localStorage.setItem('demoUserId', currentUser.id);
 
         const adminModeToggle = document.getElementById('adminModeToggle');
         function updateAdminToggleText() {
             if (!adminModeToggle) return;
+            if (currentUser.isAuthenticated) {
+                adminModeToggle.textContent = currentUser.isAdmin ? 'Админ (аккаунт): ВКЛ' : 'Админ (аккаунт): ВЫКЛ';
+                return;
+            }
             adminModeToggle.textContent = currentUser.isAdmin ? 'Админ: ВКЛ' : 'Админ: ВЫКЛ';
         }
 
         adminModeToggle?.addEventListener('click', function() {
+            if (currentUser.isAuthenticated) {
+                alert('Роль администратора задается на сервере, переключение отключено.');
+                return;
+            }
             const nextValue = !currentUser.isAdmin;
             localStorage.setItem('demoIsAdmin', nextValue ? '1' : '0');
             window.location.reload();
         });
 
         updateAdminToggleText();
+
+        const loginNavBtn = document.getElementById('loginNavBtn');
+        const logoutNavBtn = document.getElementById('logoutNavBtn');
+
+        function updateAuthButtons() {
+            if (!loginNavBtn || !logoutNavBtn) return;
+            if (currentUser.isAuthenticated) {
+                loginNavBtn.innerHTML = `<i class="bi bi-person-check"></i> ${escapeHtml(currentUser.name || 'Пользователь')}`;
+                loginNavBtn.setAttribute('disabled', 'disabled');
+                loginNavBtn.removeAttribute('data-bs-toggle');
+                loginNavBtn.removeAttribute('data-bs-target');
+                logoutNavBtn.style.display = '';
+            } else {
+                loginNavBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+                loginNavBtn.removeAttribute('disabled');
+                loginNavBtn.setAttribute('data-bs-toggle', 'modal');
+                loginNavBtn.setAttribute('data-bs-target', '#loginModal');
+                logoutNavBtn.style.display = 'none';
+            }
+        }
+
+        async function logoutUser() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error(error);
+            }
+            clearAuthState();
+            window.location.reload();
+        }
+
+        logoutNavBtn?.addEventListener('click', logoutUser);
+        updateAuthButtons();
+        authSyncPromise.finally(() => {
+            currentUser = readCurrentUserFromStorage();
+            updateAdminToggleText();
+            updateAuthButtons();
+        });
 
         const defaultCandidates = [
             { id: 'cand_1', full_name: 'Иванов Иван Петрович', category: 'Образование', description: 'Директор школы №15, инициатор программы цифровизации образования в регионе.', votes: 1247, status: 'approved' },
@@ -1365,6 +1517,12 @@
         document.getElementById('commentsModalForm')?.addEventListener('submit', function(event) {
             event.preventDefault();
             if (!activeCommentCandidateId) return;
+            if (!currentUser.isAuthenticated) {
+                alert('Оставлять комментарии могут только авторизованные пользователи.');
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+                return;
+            }
 
             const textInput = document.getElementById('commentTextInput');
             const author = (currentUser.name || 'Пользователь').trim();
@@ -1410,11 +1568,12 @@
 
         // Telegram авторизация
         function loginWithTelegram() {
-            console.log('Telegram OAuth инициирован');
-            // В продакшене здесь будет интеграция с Telegram Login Widget
-            // https://core.telegram.org/widgets/login
-            alert('Перенаправление на авторизацию Telegram...\n\nВ продакшн версии здесь будет открыт Telegram Login Widget.');
-            // window.location.href = '/api/auth/telegram';
+            const loginModalEl = document.getElementById('loginModal');
+            const loginModal = bootstrap.Modal.getInstance(loginModalEl);
+            if (loginModal) loginModal.hide();
+
+            const returnTo = `${window.location.origin}${window.location.pathname}`;
+            window.location.href = `/api/auth/telegram/start?returnTo=${encodeURIComponent(returnTo)}`;
         }
 
         // MAX авторизация
@@ -1484,19 +1643,24 @@
             // autoLogin(data);
         }
 
-        // Telegram Login Widget callback (для продакшена)
+        // Telegram Login Widget callback (fallback-вариант)
         window.onTelegramAuth = function(user) {
             console.log('Telegram user authenticated:', user);
-            // Отправка данных на backend для создания сессии
             fetch('/api/auth/telegram/callback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(user)
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('Авторизация через Telegram успешна!');
+                    if (data.token) {
+                        localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+                    }
+                    if (data.user) {
+                        storeAuthUser(data.user);
+                    }
                     window.location.reload();
                 }
             })

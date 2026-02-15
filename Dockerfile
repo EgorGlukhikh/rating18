@@ -1,31 +1,19 @@
-# Build stage
-FROM node:18-alpine as build
+﻿FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source code
-COPY . .
+COPY backend/package*.json ./backend/
+RUN npm --prefix backend install --omit=dev
 
-# Build the application
+COPY . .
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+ENV NODE_ENV=production
+ENV PORT=80
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built files from build stage
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "backend/src/app.js"]
