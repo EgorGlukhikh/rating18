@@ -105,6 +105,13 @@ router.get('/telegram/config', (req, res) => {
 });
 
 router.get('/telegram/start', (req, res) => {
+  // Safety net: if Telegram auth payload is sent to /start (e.g. cached widget),
+  // process it as callback to avoid redirect loops.
+  if (req.query && req.query.hash && req.query.id && req.query.auth_date) {
+    req.url = `/telegram/callback?${new URLSearchParams(req.query).toString()}`;
+    return router.handle(req, res);
+  }
+
   const botUsername = normalizeBotUsername(process.env.TELEGRAM_BOT_USERNAME || '');
   if (!botUsername) {
     return res.status(500).send('TELEGRAM_BOT_USERNAME is not configured on server');
